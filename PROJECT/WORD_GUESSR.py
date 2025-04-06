@@ -2,7 +2,27 @@ import random as r
 import colorama
 from colorama import Fore
 import sqlite3
+import requests
 
+def word_meaning(m_word):
+    word = m_word
+    url = f"https://api.dictionaryapi.dev/api/v1/entries/en/{word}"
+
+    try:
+        res = requests.get(url)
+        res.raise_for_status()  # Check if the request was successful
+        data = res.json()
+
+        # Loop through the meanings of noun and verb
+        for meaning_type in data[0]["meaning"]:
+            if meaning_type in ["noun", "verb"]:
+                for entry in data[0]["meaning"][meaning_type]:
+                    print(f"{meaning_type.capitalize()} definition: {entry['definition']}")
+                    return entry['definition']  # Return the first definition found
+
+    except requests.exceptions.RequestException as e:
+        print()
+        return "Meaning not found."
 
 def get_5_letter_words(file_name):
     five_letter_words = []
@@ -20,7 +40,8 @@ words_list = get_5_letter_words('words.txt')
 
 def game():
     colorama.init(autoreset=True)
-    random_word = r.choice(words_list)
+    random_word = "evans"
+
     print(random_word)
 
     print("YOU HAVE A TOTAL OF FIVE ATTEMPTS!")
@@ -38,7 +59,9 @@ def game():
         if guess == random_word:
             points = 5 - j
             print(Fore.GREEN + f"{guess.upper()} is correct!")
+            meaning = word_meaning(random_word)
             return points, True
+
 
         for i in range(5):
             if guess[i] == random_word[i]:
@@ -49,7 +72,9 @@ def game():
                 print(Fore.RED + f"{guess[i]} ", end="")
         print()
 
+
     print("\nYOU LOST")
+    word_meaning(random_word)
     print(f"The word was: {random_word.upper()}")
     return 0, False
 
